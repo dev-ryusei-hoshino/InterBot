@@ -19,8 +19,7 @@ export default {
     prefix: ["!", "$"],
 
     owner: {
-      number: "6283892508772",
-      name: "Ryusei Hoshino",
+      number: ["6283892508772"],
     },
   },
   mess: {
