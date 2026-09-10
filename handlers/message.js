@@ -130,7 +130,7 @@ export async function handleMessage(conn, msg) {
       ? senderJid.replace("@s.whatsapp.net", "")
       : "";
     const senderName = msg.verifiedBizName || msg.pushName || "Tanpa Nama";
-    if (senderNumber === config.bot.owner.number || senderLid === botLid)
+    if (config.bot.owner.numbers.includes(senderNumber) || senderLid === botLid)
       isOwner = true;
 
     const prefixes = config.bot.prefix;
