@@ -1,6 +1,6 @@
 <img src="https://files.catbox.moe/whibns.gif" alt="Ryusel x anatres" width="600">
 
-> [!NOTE]
+> [!NOTEX]
 > This is an app automation system.
 
 > [!TIP]
