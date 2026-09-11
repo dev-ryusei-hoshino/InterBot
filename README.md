@@ -49,8 +49,89 @@
 
 ## Overview
 
-**interbot** is a WhatsApp bot system built on top of [Baileys](https://github.com/WhiskeySockets/Baileys). It pairs your WhatsApp account as a linked device, then responds to commands, runs plugins, and exposes a full web dashboard for management.
+**interbot** is a WhatsApp bot system built on top of 
+---
 
+## Credits
+
+**interbot** is built on **Nozomi Base**.
+
+- Original base: [github.com/dev-ryusei-hoshino/Nozomi-Base](https://github.com/dev-ryusei-hoshino/Nozomi-Base)
+- Current repo: [github.com/dev-ryusei-hoshino/InterBot](https://github.com/dev-ryusei-hoshino/InterBot)
+
+### Runtime and Libraries
+
+<img src="https://nodejs.org/static/images/logo.svg" alt="Node.js" height="28" />
+
+**[Node.js](https://nodejs.org)** — JavaScript runtime that powers the entire system.
+
+<img src="https://raw.githubusercontent.com/WhiskeySockets/Baileys/master/Media/logo.png" alt="Baileys" height="28" />
+
+**[Baileys](https://github.com/WhiskeySockets/Baileys)** — WhatsApp Web API library. Handles pairing, message encryption, session management, and all WhatsApp communication.
+
+<img src="https://expressjs.com/images/express-facebook-share.png" alt="Express" height="28" />
+
+**[Express](https://expressjs.com)** — Web framework powering the dashboard server and API routes.
+
+<img src="https://sharp.pixelplumbing.com/img/logo.svg" alt="Sharp" height="28" />
+
+**[Sharp](https://sharp.pixelplumbing.com)** — High-performance image processing.
+
+<img src="https://ffmpeg.org/img/ffmpeg3d_white_20.png" alt="FFmpeg" height="28" />
+
+**[FFmpeg](https://ffmpeg.org)** — Video and audio processing for media-based plugins.
+
+<img src="https://jimp-dev.github.io/jimp/logo.png" alt="Pino" height="28" />
+
+**[Pino](https://getpino.io)** — Fast JSON logger used by Baileys.
+
+---
+
+## Verified Hosting Providers
+
+interbot runs on any Node.js hosting platform. The following providers are verified and tested:
+
+<img src="https://cdn.brandfetch.io/pterodactyl.io/w/400/h/400" alt="Pterodactyl" height="32" />
+
+**[Pterodactyl Panel](https://pterodactyl.io)** — Open-source game and application server management panel. Fully compatible with interbot. Persistent session storage supported through volumes.
+
+<img src="https://cdn.brandfetch.io/heroku.com/w/400/h/400" alt="Heroku" height="32" />
+
+**[Heroku](https://heroku.com)** — Cloud platform as a service. Auto-detects public URL via `HEROKU_APP_NAME` environment variable. Session persistence requires an add-on or attached disk.
+
+<img src="https://cdn.brandfetch.io/render.com/w/400/h/400" alt="Render" height="32" />
+
+**[Render](https://render.com)** — Unified cloud platform for apps and services. Auto-detects public URL via `RENDER_EXTERNAL_URL`. Free tier does not persist sessions across deploys.
+
+<img src="https://cdn.brandfetch.io/railway.app/w/400/h/400" alt="Railway" height="32" />
+
+**[Railway](https://railway.app)** — Instant deployment platform. Auto-detects public URL via `RAILWAY_PUBLIC_DOMAIN`. Persistent volumes available for session storage.
+
+<img src="https://cdn.brandfetch.io/fly.io/w/400/h/400" alt="Fly" height="32" />
+
+**[Fly.io](https://fly.io)** — Global application platform. Auto-detects public URL via `FLY_APP_NAME`. Volumes supported for session persistence.
+
+<img src="https://cdn.brandfetch.io/vercel.com/w/400/h/400" alt="Vercel" height="32" />
+
+**[Vercel](https://vercel.com)** — Frontend cloud platform. Suitable for the dashboard only, not the bot itself (no persistent filesystem). Use with an external API backend.
+
+<img src="https://cdn.brandfetch.io/digitalocean.com/w/400/h/400" alt="DigitalOcean" height="32" />
+
+**[DigitalOcean](https://digitalocean.com)** — Cloud infrastructure provider. Works with any VPS or App Platform deployment. Full control over persistent storage.
+
+<img src="https://cdn.brandfetch.io/aws.amazon.com/w/400/h/400" alt="AWS" height="32" />
+
+**[Amazon Web Services](https://aws.amazon.com)** — Cloud computing platform. Compatible via EC2, Lightsail, or App Runner. Persistent storage via EBS or S3.
+
+---
+
+## Brand Notice
+
+All logos, trademarks, and brand names referenced above are the property of their respective owners. They are used here for identification purposes only and do not imply endorsement or partnership.
+
+If you are a representative of any brand listed and would like your logo updated, corrected, or removed, please open an issue on the repository.
+
+---
 Key highlights:
 
 - **Web dashboard** — pair, control, and monitor the bot without touching the terminal
