@@ -1,9 +1,7 @@
 import config from "../config.js";
 import { plugins } from "../plugins/index.js";
-import axios from "axios";
-import { getRuntimeValue, setRuntimeValue } from "../utils/runtime.js";
-import packageFile from "../package.json" with { type: "json" };
-import fs from "fs";
+import { getRuntimeValue } from "../utils/runtime.js";
+import { resolveLid, resolveLidSync } from "../utils/lidResolver.js";
 import { Button } from "../utils/MessageBuilderV4.7.js";
 import chalk from "chalk";
 
@@ -37,16 +35,19 @@ function findClosest(input, list) {
   return minDistance <= 2 ? closest : null;
 }
 
+function stripAt(id) {
+  if (!id) return "";
+  return String(id).split("@")[0].split(":")[0];
+}
+
 export async function handleMessage(conn, msg) {
   try {
     const isMe = msg.key.fromMe;
 
     if (!msg.message) return;
-    if (config.ignore_self && isMe) return;
 
     const mess =
       msg.message.conversation || msg.message.extendedTextMessage?.text || "";
-    if (!mess) return;
 
     const remoteJid = msg.key.remoteJid || "";
     const isGroup = remoteJid.endsWith("@g.us");
@@ -55,9 +56,80 @@ export async function handleMessage(conn, msg) {
       remoteJid === "status@broadcast" || msg.broadcast === true;
     const isPrivate = !isGroup && !isChannel && !isBroadcast;
 
+    const ids = [
+      msg.key.participant,
+      msg.key.participantAlt,
+      msg.key.remoteJid,
+      msg.key.remoteJidAlt,
+    ];
+
+    let senderLid = ids.find((id) => id && id.includes("@lid"));
+    let senderJid = ids.find((id) => id && id.includes("@s.whatsapp.net"));
+
+    const rawBotJid = conn.user.id;
+    const botLid = conn.user.lid;
+    const botJid = rawBotJid
+      ? rawBotJid.split(":")[0] + "@s.whatsapp.net"
+      : "";
+
+    if (isMe) {
+      senderLid = botLid || senderLid;
+      senderJid = botJid || senderJid;
+    }
+
+    // ========== LID -> PHONE RESOLUTION ==========
+    // If we only have a LID (no JID), try to resolve it
+    if (!senderJid && senderLid) {
+      // Try sync (cached) first
+      const cachedPhone = resolveLidSync(senderLid);
+      if (cachedPhone) {
+        senderJid = cachedPhone + "@s.whatsapp.net";
+      } else if (isGroup) {
+        // In groups, metadata lookup is fastest
+        try {
+          const groupMetadata = await conn.groupMetadata(remoteJid);
+          const pData = groupMetadata.participants.find((p) => p.id === senderLid);
+          if (pData && pData.phoneNumber) {
+            senderJid = pData.phoneNumber + "@s.whatsapp.net";
+          }
+        } catch (e) {}
+      }
+
+      // Fallback: full resolver (may call onWhatsApp)
+      if (!senderJid) {
+        const resolved = await resolveLid(conn, senderLid);
+        if (resolved) {
+          senderJid = resolved + "@s.whatsapp.net";
+        }
+      }
+    }
+
+    let senderNumber = senderJid
+      ? senderJid.replace("@s.whatsapp.net", "")
+      : "";
+
+    const botNumber = rawBotJid ? rawBotJid.split(":")[0] : "";
+
+    // ========== BAN CHECK (silent) ==========
+    const bannedList = config.bot.banned?.number || [];
+    if (
+      bannedList.includes(senderNumber) ||
+      (senderLid && bannedList.includes(stripAt(senderLid)))
+    ) {
+      return;
+    }
+
+    // ========== IGNORE SELF ==========
+    const ignoreSelf = await getRuntimeValue("ignore_self");
+    if (ignoreSelf === true && senderNumber === botNumber) return;
+    if (config.ignore_self && isMe) return;
+
+    if (!mess) return;
+
     let isAdmin = false;
     let isBotAdmin = false;
     let isOwner = false;
+    let isPremium = false;
     let isCmd = false;
     let usedPrefix = "";
     let command = "";
@@ -76,84 +148,84 @@ export async function handleMessage(conn, msg) {
       },
     };
 
-    const ids = [
-      m.key.participant,
-      m.key.participantAlt,
-      m.key.remoteJid,
-      m.key.remoteJidAlt,
-    ];
-
-    let senderLid = ids.find((id) => id && id.includes("@lid"));
-    let senderJid = ids.find((id) => id && id.includes("@s.whatsapp.net"));
     let jid =
       isGroup || isChannel || isBroadcast ? remoteJid : senderJid || remoteJid;
 
-    const rawBotJid = conn.user.id;
-    const botLid = conn.user.lid;
-    const botJid = rawBotJid ? rawBotJid.split(":")[0] + "@s.whatsapp.net" : "";
     let formattedLid = senderLid;
-    const botNumber = rawBotJid ? rawBotJid.split(":")[0] : "";
-
-    if (isMe) {
-      senderLid = botLid || senderLid;
-      senderJid = botJid || senderJid;
-    }
 
     if (isGroup) {
-      const groupMetadata = await conn.groupMetadata(remoteJid);
-      const participants = groupMetadata.participants;
+      try {
+        const groupMetadata = await conn.groupMetadata(remoteJid);
+        const participants = groupMetadata.participants;
 
-      if (!senderJid && senderLid) {
-        const pData = participants.find((p) => p.id === senderLid);
-        if (pData && pData.phoneNumber) {
-          senderJid = pData.phoneNumber + "@s.whatsapp.net";
+        if (!senderJid && senderLid) {
+          const pData = participants.find((p) => p.id === senderLid);
+          if (pData && pData.phoneNumber) {
+            senderJid = pData.phoneNumber + "@s.whatsapp.net";
+            senderNumber = senderJid.replace("@s.whatsapp.net", "");
+          }
         }
-      }
 
-      const checkAdmin =
-        participants.find((p) => p.id === senderLid) ||
-        participants.find((n) => n.phoneNumber === senderJid);
+        const checkAdmin =
+          participants.find((p) => p.id === senderLid) ||
+          participants.find((n) => n.phoneNumber === senderJid);
 
-      isAdmin =
-        checkAdmin?.admin === "admin" || checkAdmin?.admin === "superadmin";
+        isAdmin =
+          checkAdmin?.admin === "admin" || checkAdmin?.admin === "superadmin";
 
-      const checkBotAdmin =
-        participants.find((p) => p.id === botLid) ||
-        participants.find((n) => n.phoneNumber === botJid);
+        const checkBotAdmin =
+          participants.find((p) => p.id === botLid) ||
+          participants.find((n) => n.phoneNumber === botJid);
 
-      isBotAdmin =
-        checkBotAdmin?.admin === "admin" ||
-        checkBotAdmin?.admin === "superadmin";
+        isBotAdmin =
+          checkBotAdmin?.admin === "admin" ||
+          checkBotAdmin?.admin === "superadmin";
+      } catch (e) {}
     }
 
-    const senderNumber = senderJid
-      ? senderJid.replace("@s.whatsapp.net", "")
-      : "";
-    const senderName = msg.verifiedBizName || msg.pushName || "Tanpa Nama";
-    if (config.bot.owner.number.includes(senderNumber) || senderLid === botLid)
+    const senderName = msg.verifiedBizName || msg.pushName || "Unknown";
+
+    // ========== OWNER / PREMIUM CHECK ==========
+    const ownerList = config.bot.owner?.number || [];
+    const premiumList = config.bot.premium?.number || [];
+    const senderLidBare = stripAt(senderLid);
+
+    if (
+      (senderNumber && ownerList.includes(senderNumber)) ||
+      (senderLidBare && ownerList.includes(senderLidBare)) ||
+      senderLid === botLid
+    ) {
       isOwner = true;
+    }
+
+    if (
+      (senderNumber && premiumList.includes(senderNumber)) ||
+      (senderLidBare && premiumList.includes(senderLidBare))
+    ) {
+      isPremium = true;
+    }
+
+    if (isOwner) isPremium = true;
 
     const prefixes = config.bot.prefix;
 
     let type;
-    if (isGroup) {
-      type = chalk.green("[GROUP]");
-    } else if (isPrivate) {
-      type = chalk.cyan("[PRIVATE]");
-    } else if (isBroadcast) {
-      type = chalk.blue("[BROADCAST]");
-    } else {
-      type = chalk.magenta("[UNKNOWN]");
-    }
+    if (isGroup) type = chalk.green("[GROUP]");
+    else if (isPrivate) type = chalk.cyan("[PRIVATE]");
+    else if (isBroadcast) type = chalk.blue("[BROADCAST]");
+    else type = chalk.magenta("[UNKNOWN]");
 
     const autoRead = await getRuntimeValue("auto_read");
     if (autoRead === true) await conn.readMessages([m.key]);
-    if (!isChannel)
+
+    if (!isChannel) {
+      const lidInfo = senderLid ? chalk.gray(` lid:${senderLidBare}`) : "";
       console.log(
         "[NEW MESSAGE]",
         type,
-        `${chalk.yellow(senderName)} ${chalk.gray(`(${senderNumber})`)}\n${chalk.yellow(">")} ${mess}\n`,
+        `${chalk.yellow(senderName)} ${chalk.gray(`(${senderNumber || "unknown"})`)}${lidInfo}\n${chalk.yellow(">")} ${mess}\n`,
       );
+    }
 
     for (const p of prefixes) {
       if (mess.startsWith(p)) {
@@ -165,7 +237,14 @@ export async function handleMessage(conn, msg) {
 
     if (isCmd) {
       const isSelf = await getRuntimeValue("self");
-      if (isSelf === true && !isOwner) return;
+      const maintenance = config.dashboard?.maintenance === true;
+
+      if (maintenance && !isOwner) {
+        return await m.reply(config.mess.maintenance);
+      }
+
+      if (isSelf === true && !isOwner && !isPremium) return;
+
       const splitMsg = mess.slice(usedPrefix.length).trim().split(/ +/);
       command = splitMsg.shift().toLowerCase();
       args = splitMsg;
@@ -176,6 +255,12 @@ export async function handleMessage(conn, msg) {
 
       if (plugin.owner_only && !isOwner) {
         return await m.reply(config.mess.owner);
+      }
+      if (plugin.premium_only && !isPremium) {
+        return await m.reply(config.mess.premium);
+      }
+      if (plugin.admin_only && !(isAdmin || isOwner)) {
+        return await m.reply(config.mess.admin);
       }
       if (plugin.group_only && !isGroup) {
         return await m.reply(config.mess.group);
@@ -195,6 +280,7 @@ export async function handleMessage(conn, msg) {
         args,
         usedPrefix,
         isOwner,
+        isPremium,
         isAdmin,
         isBotAdmin,
         isGroup,
@@ -209,7 +295,7 @@ export async function handleMessage(conn, msg) {
         await conn.sendPresenceUpdate("available", jid);
       } catch (err) {
         console.error(`[EXEC ERROR] Command ${command}:`, err);
-        await m.reply("Terjadi kesalahan saat menjalankan perintah tersebut.");
+        await m.reply("An error occurred while running that command.");
       }
     } else if (isCmd && !plugins.has(command)) {
       await conn.sendPresenceUpdate("recording", jid);
@@ -217,12 +303,12 @@ export async function handleMessage(conn, msg) {
       const suggestion = findClosest(command, allCommands);
 
       const text = suggestion
-        ? `\`\`\`Command tidak ditemukan\`\`\`\n> Mungkin: ${usedPrefix}${suggestion}`
-        : `\`\`\`Command tidak ditemukan\`\`\`\n> Ketik: ${usedPrefix}menu`;
+        ? `\`\`\`Command not found\`\`\`\n> Did you mean: ${usedPrefix}${suggestion}`
+        : `\`\`\`Command not found\`\`\`\n> Type: ${usedPrefix}menu`;
 
       try {
         await new Button(conn)
-          .setTitle("❌ Error 404")
+          .setTitle("Error 404")
           .setBody(text)
           .addButton("inapp_signup", {})
           .send(jid, {
@@ -245,11 +331,11 @@ export async function handleMessage(conn, msg) {
 
         await conn.sendPresenceUpdate("available", jid);
       } catch (err) {
-        console.error("Gagal mengirim fake product:", err);
+        console.error("Failed to send command-not-found:", err);
         await m.reply(text);
       }
     }
   } catch (error) {
-    console.error("Terjadi kesalahan di handler pesan:", error);
+    console.error("Message handler error:", error);
   }
 }
