@@ -1,0 +1,1547 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>interbot — Operating System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    :root {
+      --bg: #090d16;
+      --surface: rgba(18, 24, 38, 0.7);
+      --surface-border: rgba(255, 255, 255, 0.08);
+      --surface-hover: rgba(255, 255, 255, 0.05);
+      --accent-blue: #2563eb;
+      --accent-cyan: #06b6d4;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --accent-purple: #8b5cf6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --radius-xl: 18px;
+      --radius-lg: 12px;
+      --radius-md: 8px;
+      --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      padding-bottom: 90px;
+    }
+    .app-container {
+      position: relative;
+      z-index: 1;
+      width: min(100% - 1.5rem, 580px);
+      margin: 0 auto;
+      padding-top: 1rem;
+    }
+
+    /* Logo */
+    .interbot_logo {
+      width: 32px; height: 32px;
+      border: 2px solid var(--accent-cyan);
+      border-radius: 100%;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+    }
+    .interbot_logo:after, .interbot_logo:before {
+      content: ""; border-radius: 50%; position: absolute;
+      width: inherit; height: inherit;
+      animation: spVortex 2s infinite linear;
+    }
+    .interbot_logo:before {
+      border-top: 5px solid var(--accent-blue);
+      top: -2px; left: calc(-50% - 2px);
+      transform-origin: right center;
+    }
+    .interbot_logo:after {
+      border-bottom: 5px solid var(--accent-cyan);
+      top: 2px; right: calc(-50% - 2px);
+      transform-origin: left center;
+    }
+    @keyframes spVortex { from{transform:rotate(0)} to{transform:rotate(359deg)} }
+
+    /* Cards */
+    .glass-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: var(--radius-xl);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .card-title {
+      font-size: 0.95rem;
+      margin-bottom: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+    .card-title i { color: var(--accent-blue); }
+
+    /* Auth */
+    .auth-overlay {
+      position: fixed; inset: 0; z-index: 99;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem;
+    }
+    .auth-box {
+      width: 100%; max-width: 380px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-xl);
+      padding: 2.25rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+    .auth-header {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 12px; margin-bottom: 1.75rem;
+    }
+    .auth-title { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; }
+    .auth-sub { font-size: 0.825rem; color: var(--text-muted); }
+
+    .input-group {
+      display: flex; flex-direction: column; gap: 8px;
+      margin-bottom: 1.25rem; text-align: left;
+    }
+    .input-label {
+      font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .input-field-wrapper {
+      position: relative; display: flex; align-items: center;
+    }
+    .input-field-wrapper i {
+      position: absolute; left: 14px; color: var(--text-muted); font-size: 0.9rem;
+    }
+    .input-field {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px 12px 40px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      outline: none;
+      transition: var(--transition);
+    }
+    .input-field:focus {
+      border-color: var(--accent-blue);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .input-field::placeholder { color: var(--text-muted); }
+
+    .btn-block {
+      width: 100%;
+      background: var(--accent-blue);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      border: none;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+    .btn-block:active { transform: scale(0.98); }
+    .btn-block:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Top bar */
+    .top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .brand-title {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 800; font-size: 1.1rem;
+    }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: var(--accent-green);
+      padding: 5px 12px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .status-badge.offline {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.25);
+      color: var(--accent-red);
+    }
+    .status-badge.pairing {
+      background: rgba(37, 99, 235, 0.1);
+      border-color: rgba(37, 99, 235, 0.25);
+      color: var(--accent-blue);
+    }
+    .status-badge.reconnect {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.25);
+      color: var(--accent-amber);
+    }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent-green);
+    }
+    .status-dot.offline { background: var(--accent-red); }
+    .status-dot.pairing { background: var(--accent-blue); }
+    .status-dot.reconnect { background: var(--accent-amber); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* Views */
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Controls */
+    .control-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 4px 0;
+    }
+    .control-row + .control-row { margin-top: 10px; }
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background-color: rgba(255,255,255,0.1);
+      border: 1px solid var(--surface-border);
+      transition: .25s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 16px; width: 16px;
+      left: 3px; bottom: 3px;
+      background-color: white; transition: .25s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--accent-blue); border-color: var(--accent-blue); }
+    input:checked + .slider:before { transform: translateX(20px); }
+    input:disabled + .slider { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-action {
+      background: var(--surface-hover);
+      border: 1px solid var(--surface-border);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      font-size: 0.825rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+    .btn-action:hover { background: rgba(255,255,255,0.1); }
+    .btn-action:active { transform: scale(0.97); }
+    .btn-action.primary { background: var(--accent-blue); border-color: var(--accent-blue); }
+    .btn-action.primary:hover { background: #1d4ed8; }
+    .btn-action.danger { color: #f87171; border-color: rgba(239, 68, 68, 0.2); }
+    .btn-action.danger:hover { background: rgba(239, 68, 68, 0.1); }
+    .btn-action.success { color: var(--accent-green); border-color: rgba(16, 185, 129, 0.2); }
+    .btn-action.success:hover { background: rgba(16, 185, 129, 0.1); }
+    .btn-action.full { width: 100%; justify-content: center; }
+    .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Stats */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 10px; margin-bottom: 1rem;
+    }
+    .stats-grid.three { grid-template-columns: repeat(3, 1fr); }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .stat-header {
+      display: flex; align-items: center; justify-content: space-between;
+      color: var(--text-muted); font-size: 0.75rem;
+    }
+    .stat-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .stat-val.small { font-size: 0.9rem; }
+
+    /* Console */
+    .console-box {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-lg);
+      padding: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      height: 220px;
+      overflow-y: auto;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .console-box::-webkit-scrollbar { width: 4px; }
+    .console-box::-webkit-scrollbar-thumb { background: var(--surface-border); border-radius: 4px; }
+    .log-line {
+      color: var(--text-muted);
+      display: flex; gap: 8px;
+      word-break: break-word;
+      line-height: 1.4;
+    }
+    .log-line .ts { color: #475569; flex-shrink: 0; }
+    .log-line.info { color: var(--accent-cyan); }
+    .log-line.success { color: var(--accent-green); }
+    .log-line.warn { color: var(--accent-amber); }
+    .log-line.error { color: var(--accent-red); }
+
+    /* Modal */
+    .modal {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      display: none; align-items: center; justify-content: center;
+      padding: 1rem;
+    }
+    .modal.show { display: flex; }
+    .modal-content {
+      width: 100%; max-width: 400px;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-xl);
+      padding: 1.75rem 1.5rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+    .modal-content h2 { font-size: 1.1rem; margin-bottom: 4px; }
+    .modal-content .sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+    .code-box {
+      background: rgba(37, 99, 235, 0.08);
+      border: 2px solid var(--accent-blue);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      margin: 14px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: #fff;
+      position: relative;
+    }
+    .code-box .expiry {
+      font-size: 0.7rem; color: var(--text-muted);
+      letter-spacing: 0; font-weight: 500; margin-top: 6px;
+    }
+    .copy-btn {
+      position: absolute; top: 8px; right: 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--surface-border);
+      border-radius: 6px; padding: 4px 10px;
+      color: var(--text-muted); font-size: 0.65rem;
+      cursor: pointer; font-weight: 600;
+      font-family: inherit;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    .countdown-warning { color: var(--accent-amber); font-weight: 700; }
+    .countdown-danger { color: var(--accent-red); font-weight: 700; animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 20px; left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid var(--surface-border);
+      padding: 10px 18px; border-radius: var(--radius-lg);
+      opacity: 0; transition: all 0.35s;
+      z-index: 200; font-weight: 600; font-size: 0.85rem;
+      max-width: 90%; text-align: center;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.error { color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
+    .toast.success { color: var(--accent-green); border-color: rgba(16, 185, 129, 0.3); }
+    .toast.info { color: var(--accent-cyan); }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Lists */
+    .item-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--surface-border);
+      font-size: 0.85rem;
+    }
+    .item-row:last-child { border-bottom: none; }
+    .item-row .item-info { flex: 1; min-width: 0; }
+    .item-row .item-info .name {
+      font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .item-row .item-info .meta {
+      font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .tag {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 100px; font-size: 0.65rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .tag.loaded { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+    .tag.disabled { background: rgba(148,163,184,0.15); color: var(--text-muted); }
+
+    .badge-mini {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+      color: var(--text-muted);
+    }
+
+    /* Forms */
+    .field { margin-bottom: 10px; }
+    .field label {
+      display: block; font-size: 0.75rem; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 6px;
+    }
+    .field input, .field textarea, .field select {
+      width: 100%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      outline: none;
+      transition: var(--transition);
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--accent-blue);
+    }
+    .field input:disabled, .field textarea:disabled { opacity: 0.6; }
+
+    .add-row { display: flex; gap: 6px; margin-top: 8px; }
+    .add-row input { flex: 1; }
+
+    .empty-state {
+      text-align: center; padding: 1rem 0;
+      color: var(--text-muted); font-size: 0.8rem;
+    }
+
+    /* Footer */
+    .legal-footer {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 1.5rem; margin-bottom: 0.5rem;
+    }
+    .legal-footer a { color: var(--text-muted); text-decoration: none; }
+    .legal-footer a:hover { color: #fff; }
+
+    /* Bottom nav */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+      background: rgba(9, 13, 22, 0.9);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid var(--surface-border);
+      display: flex; justify-content: space-around;
+      padding: 10px 0 12px;
+    }
+    .nav-btn {
+      background: none; border: none;
+      color: var(--text-muted);
+      font-size: 0.65rem; font-weight: 600;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 5px; cursor: pointer;
+      width: 20%; transition: var(--transition);
+      font-family: inherit;
+    }
+    .nav-btn i { font-size: 1.05rem; }
+    .nav-btn.active { color: var(--accent-blue); }
+
+    .info-note {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    .info-note code {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(255,255,255,0.05);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUTH -->
+  <div class="auth-overlay" id="auth-screen" style="display:none">
+    <div class="auth-box">
+      <div class="auth-header">
+        <div class="interbot_logo" style="width:44px;height:44px"></div>
+        <div class="auth-title">interbot</div>
+        <p class="auth-sub" id="auth-sub">Console Authentication Required</p>
+      </div>
+
+      <form id="setup-form" style="display:none" onsubmit="handleSetup(event)">
+        <div class="input-group">
+          <label class="input-label">Setup Key</label>
+          <div class="input-field-wrapper">
+            <i class="fa-solid fa-shield-halved"></i>
+            <input type="text" id="setup-key" class="input-field" placeholder="From config.js" required />
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Create Password</label>
+          <div class="input-field-wrapper">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="setup-password" class="input-field" placeholder="Min 6 characters" required minlength="6" />
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Confirm Password</label>
+          <div class="input-field-wrapper">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="setup-confirm" class="input-field" placeholder="Repeat password" required minlength="6" />
+          </div>
+        </div>
+        <button type="submit" class="btn-block" id="setup-btn">
+          <span>Create Account</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <form id="login-form" style="display:none" onsubmit="handleLogin(event)">
+        <div class="input-group">
+          <label class="input-label">Password</label>
+          <div class="input-field-wrapper">
+            <i class="fa-solid fa-key"></i>
+            <input type="password" id="login-password" class="input-field" placeholder="Enter password" required />
+          </div>
+        </div>
+        <button type="submit" class="btn-block" id="login-btn">
+          <span>Authenticate</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div class="app-container" id="app" style="display:none">
+
+    <header class="top-bar">
+      <div class="brand-title">
+        <div class="interbot_logo"></div>
+        <span id="app-title">interbot OS</span>
+      </div>
+      <div class="status-badge" id="status-badge">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Connected</span>
+      </div>
+    </header>
+
+    <!-- CONSOLE -->
+    <section id="view-console" class="view-section active">
+      <div class="glass-card">
+        <div class="control-row">
+          <div>
+            <div style="font-weight:700;font-size:0.9rem" id="phone-display">Not linked</div>
+            <div style="font-size:0.75rem;color:var(--text-muted)" id="state-display">Offline</div>
+          </div>
+          <button class="btn-action primary" id="pair-open-btn">
+            <i class="fa-solid fa-link"></i>
+            <span>Link Phone</span>
+          </button>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--surface-border);margin:12px 0">
+        <div class="control-row">
+          <span style="font-size:0.825rem;color:var(--text-muted)">Port</span>
+          <span class="badge-mini" id="port-display">--</span>
+        </div>
+        <div class="control-row">
+          <span style="font-size:0.825rem;color:var(--text-muted)">Connection</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn-action danger" id="disconnect-btn" style="display:none">
+              <i class="fa-solid fa-power-off"></i>
+            </button>
+            <button class="btn-action" id="reconnect-btn">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid three">
+        <div class="stat-card">
+          <div class="stat-header"><span>Uptime</span><i class="fa-solid fa-clock"></i></div>
+          <span class="stat-val small" id="uptime-val">--</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header"><span>Messages</span><i class="fa-solid fa-message"></i></div>
+          <span class="stat-val small" id="msgs-val">0</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header"><span>Plugins</span><i class="fa-solid fa-puzzle-piece"></i></div>
+          <span class="stat-val small" id="plugins-val">0</span>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-sliders"></i>
+          <span>Runtime Controls</span>
+        </div>
+        <div class="control-row">
+          <div>
+            <div style="font-weight:600;font-size:0.875rem">Self Mode</div>
+            <div style="font-size:0.72rem;color:var(--text-muted)">Only owner + premium can use</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="rt-self" onchange="setRuntime('self', this.checked)"><span class="slider"></span></label>
+        </div>
+        <div class="control-row">
+          <div>
+            <div style="font-weight:600;font-size:0.875rem">Auto Read</div>
+            <div style="font-size:0.72rem;color:var(--text-muted)">Mark messages as read</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="rt-autoread" onchange="setRuntime('auto_read', this.checked)"><span class="slider"></span></label>
+        </div>
+        <div class="control-row">
+          <div>
+            <div style="font-weight:600;font-size:0.875rem">Ignore Self</div>
+            <div style="font-size:0.72rem;color:var(--text-muted)">Ignore own messages</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="rt-ignoreself" onchange="setRuntime('ignore_self', this.checked)"><span class="slider"></span></label>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--surface-border);margin:12px 0">
+        <div class="control-row">
+          <div>
+            <div style="font-weight:600;font-size:0.875rem;color:var(--accent-amber)">Maintenance Mode</div>
+            <div style="font-size:0.72rem;color:var(--text-muted)">Only owner can use commands</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="rt-maintenance" onchange="setMaintenance(this.checked)"><span class="slider"></span></label>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-database"></i>
+          <span>Session</span>
+        </div>
+        <div class="control-row" style="margin-bottom:10px">
+          <span style="font-size:0.8rem;color:var(--text-muted)">Backups stored</span>
+          <span class="badge-mini" id="backups-val">0/5</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <button class="btn-action full" onclick="sessionAction('backup')">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Backup</span>
+          </button>
+          <button class="btn-action full" onclick="sessionAction('restore')">
+            <i class="fa-solid fa-cloud-arrow-down"></i>
+            <span>Restore</span>
+          </button>
+          <button class="btn-action full" onclick="sessionAction('clean')">
+            <i class="fa-solid fa-broom"></i>
+            <span>Clean</span>
+          </button>
+          <button class="btn-action full danger" onclick="sessionAction('delete')">
+            <i class="fa-solid fa-trash"></i>
+            <span>Reset</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em">Live Console</span>
+          <i class="fa-solid fa-terminal" style="font-size:0.8rem;color:var(--text-muted)"></i>
+        </div>
+        <div class="console-box" id="console-logs"></div>
+      </div>
+    </section>
+
+    <!-- METRICS -->
+    <section id="view-metrics" class="view-section">
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-microchip"></i>
+          <span>System</span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header"><span>RAM</span><i class="fa-solid fa-memory"></i></div>
+            <span class="stat-val small" id="sys-ram">--</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><span>CPU</span><i class="fa-solid fa-microchip"></i></div>
+            <span class="stat-val small" id="sys-cpu">--</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><span>Platform</span><i class="fa-solid fa-server"></i></div>
+            <span class="stat-val small" id="sys-platform">--</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><span>Node</span><i class="fa-brands fa-node"></i></div>
+            <span class="stat-val small" id="sys-node">--</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-chart-simple"></i>
+          <span>Bot Activity</span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header"><span>Groups</span><i class="fa-solid fa-users"></i></div>
+            <span class="stat-val" id="m-groups">0</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><span>Commands</span><i class="fa-solid fa-terminal"></i></div>
+            <span class="stat-val" id="m-commands">0</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><span>Reconnects</span><i class="fa-solid fa-arrows-rotate"></i></div>
+            <span class="stat-val" id="m-reconnects">0</span>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><span>Last Activity</span><i class="fa-solid fa-clock"></i></div>
+            <span class="stat-val small" id="m-last">--</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLUGINS -->
+    <section id="view-plugins" class="view-section">
+      <div class="glass-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="card-title" style="margin:0">
+            <i class="fa-solid fa-puzzle-piece"></i>
+            <span>Plugins</span>
+          </div>
+          <button class="btn-action" onclick="reloadPlugins()">
+            <i class="fa-solid fa-rotate"></i>
+            <span>Reload</span>
+          </button>
+        </div>
+        <div class="info-note">Toggle takes effect immediately. No restart needed.</div>
+        <div id="plugins-list" style="margin-top:10px">
+          <div class="empty-state">Loading plugins...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- USERS -->
+    <section id="view-users" class="view-section">
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-crown"></i>
+          <span>Owner Numbers</span>
+        </div>
+        <div class="info-note">Owners can use all commands. Always premium.</div>
+        <div id="list-owner" style="margin-top:8px"></div>
+        <div class="add-row">
+          <input class="input-field" id="add-owner" placeholder="6281234567890" />
+          <button class="btn-action primary" onclick="addUser('owner','add-owner')">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-star"></i>
+          <span>Premium Users</span>
+        </div>
+        <div class="info-note">Can use commands when Self Mode is on.</div>
+        <div id="list-premium" style="margin-top:8px"></div>
+        <div class="add-row">
+          <input class="input-field" id="add-premium" placeholder="6281234567890" />
+          <button class="btn-action primary" onclick="addUser('premium','add-premium')">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-ban"></i>
+          <span>Banned Users</span>
+        </div>
+        <div class="info-note">Bot ignores them completely — no reply at all.</div>
+        <div id="list-banned" style="margin-top:8px"></div>
+        <div class="add-row">
+          <input class="input-field" id="add-banned" placeholder="6281234567890" />
+          <button class="btn-action danger" onclick="addUser('banned','add-banned')">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="view-settings" class="view-section">
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-id-card"></i>
+          <span>Bot Identity</span>
+        </div>
+        <div class="info-note">Saved to <code>config.js</code> and applied instantly.</div>
+        <div class="field" style="margin-top:12px">
+          <label>Bot Name</label>
+          <input id="set-name" />
+        </div>
+        <div class="field">
+          <label>Slogan</label>
+          <input id="set-slog" />
+        </div>
+        <div class="field">
+          <label>Prefix (space-separated)</label>
+          <input id="set-prefix" />
+        </div>
+        <button class="btn-action primary full" onclick="saveIdentity()">
+          <i class="fa-solid fa-check"></i>
+          <span>Save Identity</span>
+        </button>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-key"></i>
+          <span>Change Password</span>
+        </div>
+        <div class="field">
+          <label>Current Password</label>
+          <input type="password" id="cp-current" />
+        </div>
+        <div class="field">
+          <label>New Password</label>
+          <input type="password" id="cp-new" />
+        </div>
+        <div class="field">
+          <label>Confirm New</label>
+          <input type="password" id="cp-confirm" />
+        </div>
+        <button class="btn-action primary full" onclick="changePassword()">
+          <i class="fa-solid fa-check"></i>
+          <span>Update Password</span>
+        </button>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>Instance</span>
+        </div>
+        <div class="control-row" style="font-size:0.8rem;margin-bottom:6px">
+          <span style="color:var(--text-muted)">Version</span>
+          <span id="set-version">--</span>
+        </div>
+        <div class="control-row" style="font-size:0.8rem;margin-bottom:6px">
+          <span style="color:var(--text-muted)">Host</span>
+          <span id="set-host" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;word-break:break-all;text-align:right;max-width:60%">--</span>
+        </div>
+        <div class="control-row" style="font-size:0.8rem">
+          <span style="color:var(--text-muted)">Port</span>
+          <span id="set-port" class="badge-mini">--</span>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-title" style="color:#f87171">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>Danger Zone</span>
+        </div>
+        <button class="btn-action full danger" onclick="logout()">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Logout Dashboard</span>
+        </button>
+      </div>
+    </section>
+
+    <footer class="legal-footer">
+      <a href="https://github.com/dev-ryusei-hoshino/InterBot" target="_blank">Repository</a>
+      <span>•</span>
+      <a href="https://wa.me/6283892508772" target="_blank">Contact</a>
+    </footer>
+  </div>
+
+  <!-- PAIR MODAL -->
+  <div class="modal" id="pair-modal">
+    <div class="modal-content">
+      <h2>Link Phone</h2>
+      <p class="sub">Enter your WhatsApp number</p>
+
+      <div id="pair-form">
+        <div class="input-group">
+          <label class="input-label">Phone Number</label>
+          <div class="input-field-wrapper">
+            <i class="fa-solid fa-phone"></i>
+            <input type="text" id="pair-phone" class="input-field" placeholder="15551234567" />
+          </div>
+        </div>
+        <button class="btn-block" id="pair-submit" onclick="submitPair()">
+          <i class="fa-solid fa-key"></i>
+          <span>Get Pairing Code</span>
+        </button>
+      </div>
+
+      <div id="pair-result" style="display:none">
+        <p style="color:var(--text-muted);font-size:0.75rem">Enter this code in WhatsApp:</p>
+        <div class="code-box">
+          <span id="pair-code">00000000</span>
+          <button class="copy-btn" onclick="copyCode()">
+            <i class="fa-regular fa-copy"></i> Copy
+          </button>
+          <div class="expiry" id="pair-expiry">Valid for 20 minutes</div>
+        </div>
+        <div id="pair-countdown" style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px"></div>
+        <p style="color:var(--text-muted);font-size:0.7rem">
+          WhatsApp → Linked Devices → Link with Phone Number
+        </p>
+      </div>
+
+      <div id="pair-error" style="display:none;margin-top:10px;padding:10px;border-radius:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25)">
+        <p style="color:#f87171;font-size:0.8rem" id="pair-error-msg"></p>
+      </div>
+
+      <button class="btn-action full" style="margin-top:12px" onclick="closePairModal()">Close</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <nav class="bottom-nav" id="bottom-nav" style="display:none">
+    <button class="nav-btn active" data-tab="console">
+      <i class="fa-solid fa-terminal"></i>
+      <span>Console</span>
+    </button>
+    <button class="nav-btn" data-tab="metrics">
+      <i class="fa-solid fa-chart-simple"></i>
+      <span>Metrics</span>
+    </button>
+    <button class="nav-btn" data-tab="plugins">
+      <i class="fa-solid fa-puzzle-piece"></i>
+      <span>Plugins</span>
+    </button>
+    <button class="nav-btn" data-tab="users">
+      <i class="fa-solid fa-users"></i>
+      <span>Users</span>
+    </button>
+    <button class="nav-btn" data-tab="settings">
+      <i class="fa-solid fa-gear"></i>
+      <span>Settings</span>
+    </button>
+  </nav>
+
+<script>
+const state = {
+  authed: false,
+  statusInterval: null,
+  countdownInterval: null,
+  eventSource: null,
+  isPairing: false,
+  currentStatus: null,
+};
+
+const $ = (id) => document.getElementById(id);
+
+function showToast(msg, type = "info") {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast show " + type;
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+    ...opts,
+  });
+  if (res.status === 401) {
+    showAuth("login");
+    throw new Error("Unauthorized");
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// ============ AUTH ============
+async function checkAuth() {
+  try {
+    const res = await fetch("/api/auth/status", { credentials: "include" });
+    const data = await res.json();
+    if (!data.setup) showAuth("setup");
+    else if (!data.authed) showAuth("login");
+    else { state.authed = true; showApp(); }
+  } catch {
+    showToast("Cannot connect to server", "error");
+    showAuth("login");
+  }
+}
+
+function showAuth(mode) {
+  $("auth-screen").style.display = "flex";
+  $("app").style.display = "none";
+  $("bottom-nav").style.display = "none";
+  $("setup-form").style.display = mode === "setup" ? "block" : "none";
+  $("login-form").style.display = mode === "login" ? "block" : "none";
+  $("auth-sub").textContent = mode === "setup"
+    ? "First-time setup. Enter the key from your config."
+    : "Console authentication required";
+  disconnectSSE();
+}
+
+function showApp() {
+  $("auth-screen").style.display = "none";
+  $("app").style.display = "block";
+  $("bottom-nav").style.display = "flex";
+  startPolling();
+  connectSSE();
+  loadRuntime();
+  loadSettings();
+  loadPlugins();
+  loadUsers();
+}
+
+async function handleSetup(e) {
+  e.preventDefault();
+  const btn = $("setup-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span><span>Creating...</span>';
+  try {
+    await api("/api/auth/setup", {
+      method: "POST",
+      body: JSON.stringify({
+        key: $("setup-key").value.trim(),
+        password: $("setup-password").value,
+        confirm: $("setup-confirm").value,
+      }),
+    });
+    showToast("Account created", "success");
+    state.authed = true;
+    showApp();
+  } catch (err) {
+    showToast(err.message, "error");
+    btn.disabled = false;
+    btn.innerHTML = '<span>Create Account</span><i class="fa-solid fa-arrow-right"></i>';
+  }
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const btn = $("login-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span><span>Authenticating...</span>';
+  try {
+    await api("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ password: $("login-password").value }),
+    });
+    showToast("Welcome back", "success");
+    state.authed = true;
+    showApp();
+  } catch (err) {
+    showToast(err.message, "error");
+    btn.disabled = false;
+    btn.innerHTML = '<span>Authenticate</span><i class="fa-solid fa-arrow-right"></i>';
+  }
+}
+
+async function logout() {
+  if (!confirm("Logout?")) return;
+  try { await api("/api/auth/logout", { method: "POST" }); } catch {}
+  state.authed = false;
+  showAuth("login");
+}
+
+async function changePassword() {
+  const current = $("cp-current").value;
+  const next = $("cp-new").value;
+  const confirm = $("cp-confirm").value;
+  if (!current || !next || !confirm) return showToast("Fill all fields", "error");
+  if (next !== confirm) return showToast("Passwords do not match", "error");
+  try {
+    await api("/api/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ current, next, confirm }),
+    });
+    showToast("Password changed. Login again.", "success");
+    setTimeout(() => { state.authed = false; showAuth("login"); }, 1500);
+  } catch (err) { showToast(err.message, "error"); }
+}
+
+// ============ NAV ============
+document.querySelectorAll(".nav-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll(".view-section").forEach(s => s.classList.remove("active"));
+    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+    $("view-" + tab).classList.add("active");
+    btn.classList.add("active");
+    if (tab === "plugins") loadPlugins();
+    if (tab === "users") loadUsers();
+  });
+});
+
+// ============ POLLING ============
+function startPolling() {
+  clearInterval(state.statusInterval);
+  refreshStatus();
+  state.statusInterval = setInterval(refreshStatus, 2000);
+}
+
+async function refreshStatus() {
+  try {
+    const data = await api("/api/status");
+    state.currentStatus = data;
+    updateStatusUI(data);
+  } catch {}
+}
+
+function updateStatusUI(d) {
+  const stateMap = {
+    ONLINE: { badge: "Connected", dot: "", cls: "" },
+    OFFLINE: { badge: "Offline", dot: "offline", cls: "offline" },
+    PAIRING: { badge: "Pairing", dot: "pairing", cls: "pairing" },
+    RECONNECTING: { badge: "Reconnecting", dot: "reconnect", cls: "reconnect" },
+    REPAIRING: { badge: "Repairing", dot: "reconnect", cls: "reconnect" },
+    CONNECTING: { badge: "Connecting", dot: "pairing", cls: "pairing" },
+  };
+  const s = stateMap[d.state] || stateMap.OFFLINE;
+  $("status-badge").className = "status-badge " + s.cls;
+  $("status-dot").className = "status-dot " + s.dot;
+  $("status-text").textContent = s.badge;
+
+  $("phone-display").textContent = d.phoneNumber ? "+" + d.phoneNumber : "Not linked";
+  $("state-display").textContent = d.state;
+  $("uptime-val").textContent = d.uptimeFormatted || "--";
+  $("msgs-val").textContent = d.messagesReceived || 0;
+  $("plugins-val").textContent = d.plugins || 0;
+  $("backups-val").textContent = `${d.sessionBackups || 0}/${d.maxBackups || 5}`;
+  $("port-display").textContent = d.port || "--";
+
+  $("m-groups").textContent = d.groups || 0;
+  $("m-commands").textContent = d.commands || 0;
+  $("m-reconnects").textContent = d.reconnectAttempts || 0;
+  if (d.lastActivity) {
+    const diff = Math.floor((Date.now() - d.lastActivity) / 1000);
+    $("m-last").textContent =
+      diff < 60 ? "Just now" :
+      diff < 3600 ? Math.floor(diff / 60) + "m ago" :
+      Math.floor(diff / 3600) + "h ago";
+  }
+
+  $("disconnect-btn").style.display = d.connected ? "inline-flex" : "none";
+  $("pair-open-btn").style.display = d.connected ? "none" : "inline-flex";
+
+  $("rt-maintenance").checked = !!d.maintenance;
+  $("set-port").textContent = d.port || "--";
+  if (d.botName) $("app-title").textContent = d.botName + " OS";
+}
+
+// ============ SSE ============
+function connectSSE() {
+  if (state.eventSource) return;
+  const es = new EventSource("/api/logs/stream", { withCredentials: true });
+  es.onmessage = (e) => {
+    try { appendLog(JSON.parse(e.data)); } catch {}
+  };
+  state.eventSource = es;
+}
+
+function disconnectSSE() {
+  if (state.eventSource) { state.eventSource.close(); state.eventSource = null; }
+}
+
+function appendLog(entry) {
+  const box = $("console-logs");
+  const line = document.createElement("div");
+  const ts = new Date(entry.ts).toLocaleTimeString([], { hour12: false });
+  line.className = "log-line " + (entry.level || "");
+  line.innerHTML = `<span class="ts">[${ts}]</span> <span>${escapeHtml(entry.line)}</span>`;
+  box.appendChild(line);
+  while (box.children.length > 300) box.removeChild(box.firstChild);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ============ PAIRING ============
+$("pair-open-btn").addEventListener("click", () => {
+  $("pair-modal").classList.add("show");
+  $("pair-form").style.display = "block";
+  $("pair-result").style.display = "none";
+  $("pair-error").style.display = "none";
+  $("pair-phone").value = "";
+  state.isPairing = false;
+});
+
+function closePairModal() {
+  $("pair-modal").classList.remove("show");
+  clearInterval(state.countdownInterval);
+}
+
+$("pair-modal").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) closePairModal();
+});
+
+async function submitPair() {
+  if (state.isPairing) return;
+  const phone = $("pair-phone").value.trim();
+  if (!phone) return showToast("Enter phone number", "error");
+
+  state.isPairing = true;
+  const btn = $("pair-submit");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span><span>Generating...</span>';
+
+  try {
+    const data = await api("/api/pair", {
+      method: "POST",
+      body: JSON.stringify({ phoneNumber: phone }),
+    });
+    $("pair-form").style.display = "none";
+    $("pair-result").style.display = "block";
+    $("pair-code").textContent = data.pairingCode;
+    $("pair-expiry").textContent = `Valid for ${Math.floor(data.expiresIn / 60)} minutes`;
+    startPairCountdown(data.expiresAt);
+    showToast("Pairing code generated", "success");
+  } catch (err) {
+    $("pair-error").style.display = "block";
+    $("pair-error-msg").textContent = err.message;
+    showToast(err.message, "error");
+  } finally {
+    state.isPairing = false;
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-key"></i><span>Get Pairing Code</span>';
+  }
+}
+
+function startPairCountdown(expiry) {
+  clearInterval(state.countdownInterval);
+  const el = $("pair-countdown");
+  state.countdownInterval = setInterval(() => {
+    const remaining = Math.floor((expiry - Date.now()) / 1000);
+    if (remaining <= 0) {
+      clearInterval(state.countdownInterval);
+      el.textContent = "Code expired";
+      el.className = "countdown-danger";
+      return;
+    }
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    el.textContent = `Expires in ${m}:${String(s).padStart(2, "0")}`;
+    el.className = remaining < 60 ? "countdown-danger" : remaining < 300 ? "countdown-warning" : "";
+  }, 1000);
+}
+
+function copyCode() {
+  const code = $("pair-code").textContent;
+  navigator.clipboard.writeText(code).then(() => showToast("Copied", "success"));
+}
+
+// ============ CONNECTION ============
+$("disconnect-btn").addEventListener("click", async () => {
+  if (!confirm("Disconnect WhatsApp?")) return;
+  try {
+    await api("/api/disconnect", { method: "POST" });
+    showToast("Disconnected", "success");
+  } catch (err) { showToast(err.message, "error"); }
+});
+
+$("reconnect-btn").addEventListener("click", async () => {
+  try {
+    await api("/api/reconnect", { method: "POST" });
+    showToast("Reconnecting...", "info");
+  } catch (err) { showToast(err.message, "error"); }
+});
+
+// ============ SESSION ============
+async function sessionAction(action) {
+  const map = {
+    backup: { url: "/api/session/backup", msg: "Session backed up" },
+    restore: { url: "/api/session/restore", msg: "Session restored" },
+    clean: { url: "/api/clean", msg: "Cleaned" },
+    delete: { url: "/api/session/delete", msg: "Session deleted", confirm: "Delete current session? You will need to re-pair." },
+  };
+  const cfg = map[action];
+  if (cfg.confirm && !confirm(cfg.confirm)) return;
+  try {
+    await api(cfg.url, { method: "POST" });
+    showToast(cfg.msg, "success");
+  } catch (err) { showToast(err.message, "error"); }
+}
+
+// ============ RUNTIME ============
+async function loadRuntime() {
+  try {
+    const rt = await api("/api/runtime");
+    $("rt-self").checked = !!rt.self;
+    $("rt-autoread").checked = !!rt.auto_read;
+    $("rt-ignoreself").checked = !!rt.ignore_self;
+  } catch {}
+}
+
+async function setRuntime(key, value) {
+  try {
+    await api("/api/runtime", {
+      method: "POST",
+      body: JSON.stringify({ key, value }),
+    });
+    showToast(`${key} = ${value}`, "success");
+  } catch (err) {
+    showToast(err.message, "error");
+    loadRuntime();
+  }
+}
+
+async function setMaintenance(value) {
+  try {
+    await api("/api/maintenance", {
+      method: "POST",
+      body: JSON.stringify({ enabled: value }),
+    });
+    showToast(`Maintenance ${value ? "ON" : "OFF"}`, "success");
+  } catch (err) {
+    showToast(err.message, "error");
+    if (state.currentStatus) {
+      $("rt-maintenance").checked = !!state.currentStatus.maintenance;
+    }
+  }
+}
+
+// ============ PLUGINS ============
+async function loadPlugins() {
+  try {
+    const data = await api("/api/plugins");
+    const list = $("plugins-list");
+    if (!data.plugins || data.plugins.length === 0) {
+      list.innerHTML = '<div class="empty-state">No plugins found</div>';
+      return;
+    }
+    list.innerHTML = data.plugins.map(p => {
+      const isDisabled = p.disabled;
+      const isLoaded = p.loaded;
+      const cmds = (p.commands || []).slice(0, 3).join(", ");
+      return `
+        <div class="item-row">
+          <div class="item-info">
+            <div class="name">${escapeHtml(p.file)}</div>
+            <div class="meta">${cmds ? "cmd: " + escapeHtml(cmds) : (isDisabled ? "disabled" : "no commands")}</div>
+          </div>
+          <span class="tag ${isDisabled ? "disabled" : "loaded"}">${isDisabled ? "OFF" : "ON"}</span>
+          <label class="switch">
+            <input type="checkbox" ${isDisabled ? "" : "checked"} onchange="togglePlugin('${escapeHtml(p.file)}', this)">
+            <span class="slider"></span>
+          </label>
+          <button class="btn-action danger" onclick="deletePlugin('${escapeHtml(p.file)}')">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      `;
+    }).join("");
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+async function togglePlugin(file, checkbox) {
+  const disable = !checkbox.checked;
+  const row = checkbox.closest(".item-row");
+  const tag = row.querySelector(".tag");
+  const meta = row.querySelector(".meta");
+
+  // Optimistic
+  tag.textContent = disable ? "OFF" : "ON";
+  tag.className = "tag " + (disable ? "disabled" : "loaded");
+  meta.textContent = disable ? "disabling..." : "enabling...";
+
+  try {
+    await api("/api/plugins/toggle", {
+      method: "POST",
+      body: JSON.stringify({ file, disabled: disable }),
+    });
+    showToast(`${file} ${disable ? "disabled" : "enabled"}`, "success");
+    // Refresh full list to get accurate command count
+    setTimeout(loadPlugins, 300);
+  } catch (err) {
+    // Revert
+    checkbox.checked = disable;
+    tag.textContent = disable ? "ON" : "OFF";
+    tag.className = "tag " + (disable ? "loaded" : "disabled");
+    showToast(err.message, "error");
+    loadPlugins();
+  }
+}
+
+async function deletePlugin(file) {
+  if (!confirm(`Delete ${file}?`)) return;
+  try {
+    await api("/api/plugins/delete", {
+      method: "POST",
+      body: JSON.stringify({ file }),
+    });
+    showToast("Plugin deleted", "success");
+    loadPlugins();
+  } catch (err) { showToast(err.message, "error"); }
+}
+
+async function reloadPlugins() {
+  try {
+    await api("/api/plugins/reload", { method: "POST" });
+    showToast("Plugins reloaded", "success");
+    loadPlugins();
+  } catch (err) { showToast(err.message, "error"); }
+}
+
+// ============ USERS ============
+async function loadUsers() {
+  try {
+    const data = await api("/api/users");
+    renderUserList("owner", data.owner);
+    renderUserList("premium", data.premium);
+    renderUserList("banned", data.banned);
+  } catch {}
+}
+
+function renderUserList(type, list) {
+  const el = $("list-" + type);
+  if (!list || list.length === 0) {
+    el.innerHTML = '<div class="empty-state">No entries</div>';
+    return;
+  }
+  el.innerHTML = list.map(v => `
+    <div class="item-row">
+      <div class="item-info">
+        <div class="name" style="font-family:'JetBrains Mono',monospace">${escapeHtml(v)}</div>
+      </div>
+      <button class="btn-action danger" onclick="removeUser('${type}','${escapeHtml(v)}')">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  `).join("");
+}
+
+async function addUser(type, inputId) {
+  const input = $(inputId);
+  const value = input.value.trim();
+  if (!value) return showToast("Enter a value", "error");
+  try {
+    await api("/api/users/add", {
+      method: "POST",
+      body: JSON.stringify({ type, value }),
+    });
+    input.value = "";
+    showToast("Added", "success");
+    loadUsers();
+  } catch (err) { showToast(err.message, "error"); }
+}
+
+async function removeUser(type, value) {
+  try {
+    await api("/api/users/remove", {
+      method: "POST",
+      body: JSON.stringify({ type, value }),
+    });
+    showToast("Removed", "success");
+    loadUsers();
+  } catch (err) { showToast(err.message, "error"); }
+}
+
+// ============ SETTINGS ============
+async function loadSettings() {
+  try {
+    const [identity, status] = await Promise.all([
+      api("/api/bot-identity"),
+      api("/api/status"),
+    ]);
+    $("set-name").value = identity.name || "";
+    $("set-slog").value = identity.slog || "";
+    $("set-prefix").value = (identity.prefix || []).join(" ");
+    $("set-version").textContent = status.botVersion || "v1.0.0";
+    $("set-host").textContent = status.hostlink || "--";
+    $("set-port").textContent = status.port || "--";
+  } catch {}
+}
+
+async function saveIdentity() {
+  const name = $("set-name").value.trim();
+  const slog = $("set-slog").value;
+  const prefix = $("set-prefix").value.trim().split(/\s+/).filter(Boolean);
+
+  if (!name) return showToast("Name required", "error");
+  if (prefix.length === 0) return showToast("At least one prefix required", "error");
+
+  try {
+    await api("/api/bot-identity", {
+      method: "POST",
+      body: JSON.stringify({ name, slog, prefix }),
+    });
+    showToast("Identity saved", "success");
+    refreshStatus();
+  } catch (err) { showToast(err.message, "error"); }
+}
+
+// ============ SYSTEM ============
+async function loadSystemMetrics() {
+  try {
+    const m = await api("/api/system");
+    $("sys-ram").textContent = `${m.ram.used}/${m.ram.total} MB`;
+    $("sys-cpu").textContent = `${m.cpu.load}%`;
+    $("sys-platform").textContent = m.platform;
+    $("sys-node").textContent = m.node;
+  } catch {}
+}
+
+setInterval(() => {
+  if (state.authed && $("view-metrics").classList.contains("active")) {
+    loadSystemMetrics();
+  }
+}, 4000);
+
+// ============ BOOT ============
+checkAuth();
+</script>
+</body>
+</html>
