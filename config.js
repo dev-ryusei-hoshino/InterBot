@@ -4,7 +4,7 @@ export default {
   // ========== CORE ==========
   sessionDir: "session",
   maxBackups: 5,
-  pairingWithQr: false,
+  pairingWithQr: true,
   ignore_self: false,
   markOnlineOnConnect: true,
   syncFullHistory: false,
@@ -14,7 +14,7 @@ export default {
   // ========== PAIRING ==========
   pairing: {
     timeout: 1200000,
-    autoRenew: true,
+    autoRenew: false,
   },
 
   // ========== RECONNECT ==========
@@ -32,7 +32,7 @@ export default {
     // Full URL = use as-is (Heroku / Render / custom domain)
     // Example: "https://interbot.herokuapp.com"
     // Example: "http://1.2.3.4:3056"
-    hostlink: "",
+    hostlink: "https://irohasoft.web.id",
 
     // Setup key — user enters this on first dashboard visit to create password.
     // After setup is complete, this becomes inert (only password matters).
@@ -51,7 +51,7 @@ export default {
     prefix: ["!", "$", "."],
 
     owner: {
-      number: ["6283892508772"],
+      number: ["6283892508772", "6285657296405"],
     },
     premium: {
       number: [],
@@ -74,8 +74,7 @@ export default {
     wait: "Please wait...",
     plugin_not_available:
       "Error: This plugin is not available right now. Please try again later.",
-    maintenance:
-      "Bot is under maintenance. Please try again later.",
+    maintenance: "Bot is under maintenance. Please try again later.",
   },
 };
 

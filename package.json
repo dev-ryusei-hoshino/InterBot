@@ -13,13 +13,16 @@
   "dependencies": {
     "@whiskeysockets/baileys": "^7.0.0-rc14",
     "axios": "^1.19.0",
+    "brat-canvas": "^1.0.30",
     "chalk": "^6.0.0",
     "express": "^4.19.2",
     "fluent-ffmpeg": "^2.1.3",
     "node-fetch": "^3.3.2",
+    "node-webpmux": "^3.2.1",
     "pdfjs-dist": "^6.3.289",
     "pino": "^10.3.1",
     "qrcode-terminal": "^0.12.0",
-    "validator": "^13.15.35"
+    "validator": "^13.15.35",
+    "yt-search": "^2.13.1"
   }
 }
